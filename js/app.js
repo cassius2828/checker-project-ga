@@ -16,7 +16,7 @@ Things To Accomplish:
 
 */
 ///////////////////////////
-// Query Selectors
+// * Query Selectors
 ///////////////////////////
 const redPiece = document.querySelectorAll(".red-piece");
 const blackPiece = document.querySelectorAll(".black-piece");
@@ -26,7 +26,7 @@ const checkerboard = document.querySelector(`.checkerboard`);
 const playerTurnText = document.querySelector(`.player-turn`);
 
 ///////////////////////////
-// Variables
+// * Variables
 ///////////////////////////
 const squaresArray = [];
 const final2DArrayofBlackSquares = [];
@@ -50,7 +50,7 @@ const playableSquaresIdArray = playableSquares.map((item) =>
 );
 
 /////////////////////////////////////////////////////
-// Recursive Function | Get 2D Array
+// * Recursive Function | Get 2D Array
 /////////////////////////////////////////////////////
 // this is a recursive function that will create my 2D array of playable (black) squares
 create2DArrayOfBlackSquares(playableSquaresIdArray);
@@ -66,35 +66,81 @@ function create2DArrayOfBlackSquares(arr) {
 console.log(final2DArrayofBlackSquares);
 
 //////////////////////////////////////////////////////
-// Listen for CheckerBoard Click
+// * Listen for CheckerBoard Click
 //////////////////////////////////////////////////////
 checkerboard.addEventListener("click", (e) => {
+  // is it a checker?
   if (e.target.classList.contains("checker")) {
+    ///////////////////////////
     // if checker is red
+    ///////////////////////////
     if (e.target.classList.contains("red-piece")) {
       // prevents player from going if it is not their turn
       if (!isRedTurn) return;
       let currentSquareOfChecker = extractNumFromIdName(e.target.parentElement);
-     
-      determineRedsNextMove(currentSquareOfChecker)
-   
-    
+
+      determineRedsNextMove(currentSquareOfChecker);
+
       selectedPiece = e.target;
       selectedPiece.classList.add("active");
     }
+    ///////////////////////////
     // if checker is black
+    ///////////////////////////
     else {
       // prevents player from going if it is not their turn
       if (isRedTurn) return;
       let currentSquareOfChecker = extractNumFromIdName(e.target.parentElement);
-    
-    determineBlacksNextMove(currentSquareOfChecker)
-    
+
+      determineBlacksNextMove(currentSquareOfChecker);
+
       selectedPiece = e.target;
 
       selectedPiece.classList.add("active");
     }
   }
+
+  /////////////////////////////////////////////
+  // action to remove piece if it is jumped
+  /////////////////////////////////////////////
+  if (
+    e.target.classList.contains("square") &&
+    e.target.classList.contains("active-jump")
+  ) {
+    // this moves the child away from the current el and into the new active one
+    // then removes the active class from all elements involved
+    e.target.appendChild(selectedPiece);
+    checkerToBeRemoved?.firstElementChild.remove();
+    // ! this is only for red 45deg btw
+    if (
+      document
+        .getElementById(`square-${availableSqrPosition1 - 7}`)
+        .classList.contains("active-jump")
+    ) {
+      deselectAvailableSquares(availableSqrPosition1, "jump");
+    } else {
+      deselectAvailableSquares(availableSqrPosition1);
+    }
+    if (
+      document
+        .getElementById(`square-${availableSqrPosition2 - 7}`)
+        .classList.contains("active-jump")
+    ) {
+      deselectAvailableSquares(availableSqrPosition2, "jump");
+    } else {
+      deselectAvailableSquares(availableSqrPosition2);
+    }
+
+    selectedPiece.classList.remove("active");
+    ///////////////////////////
+    // toggles player turns
+    ///////////////////////////
+    isRedTurn = !isRedTurn;
+    renderWhosTurn(isRedTurn);
+  }
+  /////////////////////////////////////////////
+  // action to remove piece if it is jumped
+  /////////////////////////////////////////////
   if (
     e.target.classList.contains("square") &&
     e.target.classList.contains("active")
@@ -102,7 +148,6 @@ checkerboard.addEventListener("click", (e) => {
     // this moves the child away from the current el and into the new active one
     // then removes the active class from all elements involved
     e.target.appendChild(selectedPiece);
-    checkerToBeRemoved?.firstElementChild.remove()
     deselectAvailableSquares(availableSqrPosition1);
     deselectAvailableSquares(availableSqrPosition2);
     selectedPiece.classList.remove("active");
@@ -111,6 +156,10 @@ checkerboard.addEventListener("click", (e) => {
     renderWhosTurn(isRedTurn);
   }
 });
+
+///////////////////////////
+// Func: render whos turn it is
+///////////////////////////
 function renderWhosTurn(isRedTurn) {
   if (isRedTurn) {
     playerTurnText.style.color = "red";
@@ -136,8 +185,8 @@ Now I have the square num of the piece I currently selected
 function determineRedsNextMove(checkerPosValue) {
   let test = final2DArrayofBlackSquares.map((arr, idx) => {
     if (arr.includes(checkerPosValue)) {
-    //   console.log(idx, " <-- arr1Lvl Index");
-    //   console.log(arr.indexOf(checkerPosValue), " <-- arr2Lvl Index");
+      //   console.log(idx, " <-- arr1Lvl Index");
+      //   console.log(arr.indexOf(checkerPosValue), " <-- arr2Lvl Index");
 
       // movement for Regular Red Pieces
       moveRegularRedPiece(arr, idx, checkerPosValue);
@@ -147,25 +196,12 @@ function determineRedsNextMove(checkerPosValue) {
 
   return test;
 }
-
-function determineBlacksNextMove(checkerPosValue) {
-  let test = final2DArrayofBlackSquares.map((arr, idx) => {
-    if (arr.includes(checkerPosValue)) {
-    //   console.log(idx, " <-- arr1Lvl Index");
-    //   console.log(arr.indexOf(checkerPosValue), " <-- arr2Lvl Index");
-
-      // movement for Regular Red Pieces
-      moveRegularBlackPiece(arr, idx, checkerPosValue);
-    }
-  });
-
-  return test;
-}
-
+//////////////////////////////////////////////////////
+// Move red | Regular piece
+//////////////////////////////////////////////////////
 function moveRegularRedPiece(arr, idx, checkerPosValue) {
   //   difference for even row and odd row index
   if (idx % 2 === 0) {
-
     //   initializing the vars
     // this allows us to select 1 of the available squares when we click on the checker
     availableSqrPosition1 =
@@ -199,6 +235,25 @@ function moveRegularRedPiece(arr, idx, checkerPosValue) {
     }
   }
 }
+//////////////////////////////////////////////////////
+// Determine available moves for black
+//////////////////////////////////////////////////////
+function determineBlacksNextMove(checkerPosValue) {
+  let test = final2DArrayofBlackSquares.map((arr, idx) => {
+    if (arr.includes(checkerPosValue)) {
+      //   console.log(idx, " <-- arr1Lvl Index");
+      //   console.log(arr.indexOf(checkerPosValue), " <-- arr2Lvl Index");
+
+      // movement for Regular Red Pieces
+      moveRegularBlackPiece(arr, idx, checkerPosValue);
+    }
+  });
+
+  return test;
+}
+//////////////////////////////////////////////////////
+// Move black | Regular piece
+//////////////////////////////////////////////////////
 function moveRegularBlackPiece(arr, idx, checkerPosValue) {
   //   difference for even row and odd row index
   if (idx % 2 === 0) {
@@ -236,51 +291,70 @@ function moveRegularBlackPiece(arr, idx, checkerPosValue) {
     }
   }
 }
+
+//////////////////////////////////////////////////////
+// FUNC: Select the available squares
+//////////////////////////////////////////////////////
 // arr, idx, checkerPosValue
 // this allows us to select 1 of the available squares when we click on the checker
 function selectAvailableSquares(position) {
   let availableSqrs = document.getElementById(`square-${position}`);
   if (availableSqrs?.firstElementChild) {
+    position = Number(position);
     // console.log(selectedPiece)
     // * will come back to deselcting piece later
     // selectedPiece?.classList.remove("active");
     // return false;
-
+    ///////////////////////////
+    // determines which square can be jumped in basic red movement
+    // king movement will take in two more if statements comparing avPos1 vs avPos2
+    ///////////////////////////
     if (
       isRedTurn &&
-      availableSqrs.firstElementChild.classList.contains("black-piece")
+      availableSqrs.firstElementChild.classList.contains("black-piece") &&
+      availableSqrPosition1 === availableSqrPosition2
     ) {
+      console.log(availableSqrs, " <-- available Sqr");
+      console.log(position, " <-- position");
+      console.log(availableSqrPosition1, " <-- avail Pos 1");
+      console.log(availableSqrPosition2, " <-- avail Pos 2");
+      // return red315degJump(availableSqrs, position);
+      return red45degJump(availableSqrs, position);
+    } else if (
+      isRedTurn &&
+      availableSqrs.firstElementChild.classList.contains("black-piece") &&
+      availableSqrPosition1 > availableSqrPosition2
+    ) {
+      console.log(availableSqrs, " <-- available Sqr");
+      console.log(position, " <-- position");
+      console.log(availableSqrPosition1, " <-- avail Pos 1");
+      console.log(availableSqrPosition2, " <-- avail Pos 2");
+      return red315degJump(availableSqrs, position);
+      // return red45degJump(availableSqrs, position);
+    } else if (
+      !isRedTurn &&
+      availableSqrs.firstElementChild.classList.contains("red-piece") &&
+      availableSqrPosition1 < availableSqrPosition2
+    ) {
+      // console.log(availableSqrs, " <-- available Sqr");
+      // console.log(position, " <-- position");
+      // console.log(availableSqrPosition1, " <-- avail Pos 1");
+      // console.log(availableSqrPosition2, " <-- avail Pos 2");
 
-      availableSqrs.classList.remove("active");
-      // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
-     
-     
-      availableSqrs = document.getElementById(`square-${position -7}`);
-      checkerToBeRemoved = document.getElementById(`square-${position}`);
-      
-    
+      return black135degJump(availableSqrs, position);
+      // return red45degJump(availableSqrs, position);
+    } else if (
+      !isRedTurn &&
+      availableSqrs.firstElementChild.classList.contains("red-piece") &&
+      availableSqrPosition1 > availableSqrPosition2
+    ) {
+      // console.log(availableSqrs, " <-- available Sqr");
+      // console.log(position, " <-- position");
+      // console.log(availableSqrPosition1, " <-- avail Pos 1");
+      // console.log(availableSqrPosition2, " <-- avail Pos 2");
 
-      //   availableSqrs =
-      //   i need the parent of the selected piece
-
-      //   let parentOfSelectedPiece = selectedPiece.parentElement;
-      //   let targetChecker = extractNumFromIdName(parentOfSelectedPiece);
-      //   console.log(
-      //     parentOfSelectedPiece,
-      //     "<-- this is the parent of the selectedPiece"
-      //   );
-      //   let test = final2DArrayofBlackSquares.filter((arr, idx) => {
-      //     arr.includes(targetChecker);
-      //   });
-      
-      
-     
-
-      //   //   console.log(final2DArrayofBlackSquares.indexOf(targetChecker));
-      //   final2DArrayofBlackSquares[
-      //     final2DArrayofBlackSquares.indexOf(targetChecker) - 1
-      //   ][test.indexOf(position) + 1];
-      availableSqrs.classList.add("active");
+      return black225degJump(availableSqrs, position);
+      // return red45degJump(availableSqrs, position);
     } else if (
       isRedTurn &&
       !availableSqrs.firstElementChild.classList.contains("black-piece")
@@ -292,22 +366,40 @@ function selectAvailableSquares(position) {
   availableSqrs.classList.add("active");
   return true;
 }
-function deselectAvailableSquares(position) {
+//////////////////////////////////////////////////////
+// FUNC: Deselect the available squares
+//////////////////////////////////////////////////////
+function deselectAvailableSquares(position, isJumping) {
   let availableSqrs = document.getElementById(`square-${position}`);
 
-  if (availableSqrs?.firstChild?.classList.contains("piece")) {
+  if (availableSqrs?.firstChild?.classList?.contains("piece")) {
     // console.log(selectedPiece)
     // * will come back to deselcting piece later
     // selectedPiece?.classList.remove("active");
     // return false;
     console.log("black piece ahead");
+  } else {
+    console.log("stop trippin");
   }
 
-  availableSqrs.classList.remove("active");
+  if (isJumping) {
+    console.log(availableSqrs);
+    console.log(availableSqrPosition1);
+    console.log(availableSqrPosition2);
+
+    availableSqrs = document.getElementById(`square-${position - 7}`);
+    availableSqrs.classList.remove(`active`, `active-jump`);
+  } else if (!isJumping) {
+    availableSqrs?.classList?.remove(`active`);
+  }
+
   return true;
 }
 
-// this extracts '1' from an id such as square-1
+//////////////////////////////////////////////////////
+// FUNC: extract the num from the id
+// ex: id="square-20" --> 20
+//////////////////////////////////////////////////////
 function extractNumFromIdName(el) {
   return el.id.split("-").pop();
 }
@@ -330,5 +422,68 @@ Simple Black:
 225deg = +14 difference ; ex 14 to 28
 */
 function showAvailableMoves() {}
+// ! works
+function red45degJump(availableSqrs, position) {
+  availableSqrs.classList.remove("active");
+  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
 
+  availableSqrs = document.getElementById(`square-${position - 7}`);
+  checkerToBeRemoved = document.getElementById(`square-${position}`);
+
+  //   availableSqrs =
+  //   i need the parent of the selected piece
+
+  //   let parentOfSelectedPiece = selectedPiece.parentElement;
+  //   let targetChecker = extractNumFromIdName(parentOfSelectedPiece);
+  //   console.log(
+  //     parentOfSelectedPiece,
+  //     "<-- this is the parent of the selectedPiece"
+  //   );
+  //   let test = final2DArrayofBlackSquares.filter((arr, idx) => {
+  //     arr.includes(targetChecker);
+  //   });
+
+  //   //   console.log(final2DArrayofBlackSquares.indexOf(targetChecker));
+  //   final2DArrayofBlackSquares[
+  //     final2DArrayofBlackSquares.indexOf(targetChecker) - 1
+  //   ][test.indexOf(position) + 1];
+  availableSqrs.classList.add("active-jump");
+}
+// ! works
+function red315degJump(availableSqrs, position) {
+  availableSqrs.classList.remove("active");
+  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
+
+  availableSqrs = document.getElementById(`square-${position - 9}`);
+  checkerToBeRemoved = document.getElementById(`square-${position}`);
+
+  availableSqrs.classList.add("active-jump");
+}
+
+// ! works
+function black135degJump(availableSqrs, position) {
+  availableSqrs.classList.remove("active");
+  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
+
+  availableSqrs = document.getElementById(`square-${Number(position) + 9}`);
+  checkerToBeRemoved = document.getElementById(`square-${position}`);
+
+  availableSqrs?.classList?.add("active-jump");
+}
+
+// ! works
+function black225degJump(availableSqrs, position) {
+  availableSqrs.classList.remove("active");
+  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
+
+  availableSqrs = document.getElementById(`square-${position + 7}`);
+  checkerToBeRemoved = document.getElementById(`square-${position}`);
+
+  availableSqrs.classList.add("active-jump");
+  console.log(availableSqrs, " <-- available Sqr");
+  console.log(position, " <-- position");
+  console.log(availableSqrPosition1, " <-- avail Pos 1");
+  console.log(availableSqrPosition2, " <-- avail Pos 2");
+  console.log(checkerToBeRemoved, " <-- checker to be removed");
+}
 // remove the child from checker placed square, replace child in the active square

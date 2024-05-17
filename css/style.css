@@ -76,3 +76,8 @@ h2 {
 .active {
   border: solid 3px gold;
 }
+
+.active-jump {
+  border: solid 3px blue;
+
+}
