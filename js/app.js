@@ -33,8 +33,12 @@ const final2DArrayofBlackSquares = [];
 let availableSqrPosition1;
 let availableSqrPosition2;
 let selectedPiece;
+let sqrOfSelectedPiece;
 let checkerRow;
-let checkerToBeRemoved;
+// this prevents undefined from occuring when accessing the element
+// checker to be removed does not come about until after the first checker is clicked, which is
+// what caused earlier errors
+let checkerToBeRemoved = selectedPiece?.parentElement;
 let isRedTurn = true;
 
 // add square els to the array
@@ -71,6 +75,19 @@ console.log(final2DArrayofBlackSquares);
 checkerboard.addEventListener("click", (e) => {
   // is it a checker?
   if (e.target.classList.contains("checker")) {
+    // removes the active class from previous selections on each new click
+    squares.forEach((sqr) => {
+      if (
+        sqr.classList.contains("active") ||
+        sqr.classList.contains("active-jump")
+      ) {
+        sqr?.classList.remove("active");
+        sqr?.classList.remove("active-jump");
+      }
+    });
+    // removes active class when a different piece is selected
+    selectedPiece?.classList.remove("active");
+
     ///////////////////////////
     // if checker is red
     ///////////////////////////
@@ -78,11 +95,10 @@ checkerboard.addEventListener("click", (e) => {
       // prevents player from going if it is not their turn
       if (!isRedTurn) return;
       let currentSquareOfChecker = extractNumFromIdName(e.target.parentElement);
-
-      determineRedsNextMove(currentSquareOfChecker);
-
       selectedPiece = e.target;
+      console.log(selectedPiece, " <-- selected piece");
       selectedPiece.classList.add("active");
+      determineRedsNextMove(currentSquareOfChecker);
     }
     ///////////////////////////
     // if checker is black
@@ -91,12 +107,10 @@ checkerboard.addEventListener("click", (e) => {
       // prevents player from going if it is not their turn
       if (isRedTurn) return;
       let currentSquareOfChecker = extractNumFromIdName(e.target.parentElement);
-
-      determineBlacksNextMove(currentSquareOfChecker);
-
       selectedPiece = e.target;
 
       selectedPiece.classList.add("active");
+      determineBlacksNextMove(currentSquareOfChecker);
     }
   }
 
@@ -110,7 +124,9 @@ checkerboard.addEventListener("click", (e) => {
     // this moves the child away from the current el and into the new active one
     // then removes the active class from all elements involved
     e.target.appendChild(selectedPiece);
-    checkerToBeRemoved?.firstElementChild.remove();
+    checkerToBeRemoved?.firstElementChild?.remove();
+    e.target.classList.remove("active-jump");
+
     // ! this is only for red 45deg btw
     if (
       document
@@ -124,7 +140,7 @@ checkerboard.addEventListener("click", (e) => {
     if (
       document
         .getElementById(`square-${availableSqrPosition2 - 7}`)
-        .classList.contains("active-jump")
+        ?.classList.contains("active-jump")
     ) {
       deselectAvailableSquares(availableSqrPosition2, "jump");
     } else {
@@ -296,11 +312,12 @@ function moveRegularBlackPiece(arr, idx, checkerPosValue) {
 // FUNC: Select the available squares
 //////////////////////////////////////////////////////
 // arr, idx, checkerPosValue
-// this allows us to select 1 of the available squares when we click on the checker
+//! this allows us to select 1 of the available squares when we click on the checker
 function selectAvailableSquares(position) {
   let availableSqrs = document.getElementById(`square-${position}`);
+
   if (availableSqrs?.firstElementChild) {
-    position = Number(position);
+    // position = Number(position);
     // console.log(selectedPiece)
     // * will come back to deselcting piece later
     // selectedPiece?.classList.remove("active");
@@ -309,51 +326,137 @@ function selectAvailableSquares(position) {
     // determines which square can be jumped in basic red movement
     // king movement will take in two more if statements comparing avPos1 vs avPos2
     ///////////////////////////
+    // this is if there is not other piece in the landing spot
     if (
       isRedTurn &&
-      availableSqrs.firstElementChild.classList.contains("black-piece") &&
-      availableSqrPosition1 === availableSqrPosition2
+      !document
+        .getElementById(`square-${position}`)
+        .firstElementChild.classList.contains("red-piece") &&
+      document
+        .getElementById(`square-${Number(position) - 7}`)
+        .classList.contains("black") &&
+      !document.getElementById(`square-${Number(position) - 7}`)
+        .firstElementChild &&
+      // extractNumFromIdName(availableSqrs + 1) % 8 !== 0 &&
+
+      extractNumFromIdName(selectedPiece.parentElement) - 14 === position - 7
+      // checkerToBeRemoved?.firstElementChild?.classList.contains(
+      //   "black-piece"
+      // ) &&
+      // !document.getElementById(
+      //   `square-${extractNumFromIdName(selectedPiece.parentElement) - 7}`
+      // ).firstElementChild
+      // availableSqrPosition1 === availableSqrPosition2
     ) {
-      console.log(availableSqrs, " <-- available Sqr");
-      console.log(position, " <-- position");
-      console.log(availableSqrPosition1, " <-- avail Pos 1");
-      console.log(availableSqrPosition2, " <-- avail Pos 2");
+      // console.log("THIS IS RED45");
+      // console.log("");
+      // console.log(selectedPiece.parentElement);
+
+      // console.log(availableSqrs, " <-- available Sqr");
+      // console.log(position, " <-- position");
+      // console.log(availableSqrPosition1, " <-- avail Pos 1");
+      // console.log(availableSqrPosition2, " <-- avail Pos 2");
+
       // return red315degJump(availableSqrs, position);
-      return red45degJump(availableSqrs, position);
+      return selectSquareToJumpTo(availableSqrs, position, "red45");
     } else if (
       isRedTurn &&
-      availableSqrs.firstElementChild.classList.contains("black-piece") &&
-      availableSqrPosition1 > availableSqrPosition2
+      extractNumFromIdName(selectedPiece.parentElement) - position !== 7 &&
+      document
+        .getElementById(`square-${Number(position) - 9}`)
+        .classList.contains("black") &&
+      !document
+        .getElementById(`square-${position}`)
+        .firstElementChild.classList.contains("red-piece") &&
+      // targets all squares on right edge of board
+      extractNumFromIdName(availableSqrs) % 8 !== 0 &&
+      !document.getElementById(`square-${Number(position) - 9}`)
+        .firstElementChild
+      //  && extractNumFromIdName(selectedPiece.parentElement) - 18 === position-11
+
+      // checkerToBeRemoved?.firstElementChild?.classList.contains("black-piece")
+      //    &&
+      //  document.getElementById(`square-${extractNumFromIdName(Number(selectedPiece.parentElement) -16)}`)?.firstElementChild
+
+      // availableSqrPosition1 > availableSqrPosition2
     ) {
+      // console.log(checkerToBeRemoved);
+      // console.log("");
+      // console.log("THIS IS RED315");
+      // console.log(extractNumFromIdName(availableSqrs), " <-- available Sqr");
+      // console.log(position, " <-- position");
+      // console.log(availableSqrPosition1, " <-- avail Pos 1");
+      // console.log(availableSqrPosition2, " <-- avail Pos 2");
+      // console.log("test");
+
+      return selectSquareToJumpTo(availableSqrs, position, "red315");
+
+      // return red45degJump(availableSqrs, position);
+    } else if (
+      !isRedTurn &&
+      availableSqrs?.firstElementChild?.classList.contains("red-piece") &&
+      extractNumFromIdName(availableSqrs) % 8 !== 0 &&
+      position - extractNumFromIdName(selectedPiece.parentElement) === 9 &&
+      !document.getElementById(`square-${Number(position) + 9}`)
+        .firstElementChild &&
+      !document
+        .getElementById(`square-${position}`)
+        .firstElementChild.classList.contains("black-piece")
+
+      //   !document
+      //   .getElementById(`square-${position}`)
+      //   .firstElementChild.classList.contains("red-piece") &&
+      // document
+      //   .getElementById(`square-${Number(position) - 7}`)
+      //   .classList.contains("black") &&
+      // !document.getElementById(`square-${Number(position) - 7}`)
+      //   .firstElementChild &&
+      // extractNumFromIdName(availableSqrs + 1) % 8 !== 0 &&
+
+      // extractNumFromIdName(selectedPiece.parentElement) - 14 === position - 7
+    ) {
+      console.log("THIS IS BLACK135");
+      console.log("");
       console.log(availableSqrs, " <-- available Sqr");
       console.log(position, " <-- position");
       console.log(availableSqrPosition1, " <-- avail Pos 1");
       console.log(availableSqrPosition2, " <-- avail Pos 2");
-      return red315degJump(availableSqrs, position);
+      // this is for a red 315deg jump!
+      return selectSquareToJumpTo(availableSqrs, position, "black135");
+      // return black135degJump(availableSqrs, position);
       // return red45degJump(availableSqrs, position);
     } else if (
       !isRedTurn &&
-      availableSqrs.firstElementChild.classList.contains("red-piece") &&
-      availableSqrPosition1 < availableSqrPosition2
+      document
+        .getElementById(
+          `square-${
+            Number(extractNumFromIdName(selectedPiece.parentElement)) + 7
+          }`
+        )
+        ?.firstElementChild?.classList.contains("red-piece") &&
+      !document.getElementById(`square-${Number(position) + 7}`)
+        ?.firstElementChild &&
+      document
+        .getElementById(`square-${Number(position) + 14}`)
+        ?.classList.contains("black") &&
+      !document
+        .getElementById(`square-${position}`)
+        ?.firstElementChild?.classList.contains("black-piece")
     ) {
-      // console.log(availableSqrs, " <-- available Sqr");
-      // console.log(position, " <-- position");
-      // console.log(availableSqrPosition1, " <-- avail Pos 1");
-      // console.log(availableSqrPosition2, " <-- avail Pos 2");
+      console.log("THIS IS BLACK225");
+      console.log("");
+      console.log(
+        document
+          .getElementById(`square-${Number(position) + 14}`)
+          ?.classList.contains("black")
+      );
+      console.log(availableSqrs, " <-- available Sqr");
+      console.log(position, " <-- position");
+      console.log(availableSqrPosition1, " <-- avail Pos 1");
+      console.log(availableSqrPosition2, " <-- avail Pos 2");
 
-      return black135degJump(availableSqrs, position);
-      // return red45degJump(availableSqrs, position);
-    } else if (
-      !isRedTurn &&
-      availableSqrs.firstElementChild.classList.contains("red-piece") &&
-      availableSqrPosition1 > availableSqrPosition2
-    ) {
-      // console.log(availableSqrs, " <-- available Sqr");
-      // console.log(position, " <-- position");
-      // console.log(availableSqrPosition1, " <-- avail Pos 1");
-      // console.log(availableSqrPosition2, " <-- avail Pos 2");
+      return selectSquareToJumpTo(availableSqrs, position, "black225");
 
-      return black225degJump(availableSqrs, position);
       // return red45degJump(availableSqrs, position);
     } else if (
       isRedTurn &&
@@ -379,7 +482,17 @@ function deselectAvailableSquares(position, isJumping) {
     // return false;
     console.log("black piece ahead");
   } else {
-    console.log("stop trippin");
+    // removes all active squares
+    squares.forEach((sqr) => {
+      if (
+        sqr.classList.contains("active") ||
+        sqr.classList.contains("active-jump")
+      ) {
+        sqr?.classList.remove("active");
+        sqr?.classList.remove("active-jump");
+      }
+    });
+    console.log("something something something to log");
   }
 
   if (isJumping) {
@@ -451,13 +564,14 @@ function red45degJump(availableSqrs, position) {
 }
 // ! works
 function red315degJump(availableSqrs, position) {
-  availableSqrs.classList.remove("active");
-  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
-
-  availableSqrs = document.getElementById(`square-${position - 9}`);
-  checkerToBeRemoved = document.getElementById(`square-${position}`);
-
-  availableSqrs.classList.add("active-jump");
+  // selectSquareToJumpTo(availableSqrs, position, -9);
+  //   availableSqrs.classList.remove("active");
+  //   // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
+  //   availableSqrs = document.getElementById(`square-${position - 9}`);
+  //   checkerToBeRemoved = document.getElementById(`square-${position}`);
+  // if(availableSqrs.innerHTML === '') {
+  //    availableSqrs.classList.add("active-jump");
+  // }
 }
 
 // ! works
@@ -480,10 +594,56 @@ function black225degJump(availableSqrs, position) {
   checkerToBeRemoved = document.getElementById(`square-${position}`);
 
   availableSqrs.classList.add("active-jump");
+}
+// remove the child from checker placed square, replace child in the active square
+// introduced some small bug
+function selectSquareToJumpTo(availableSqrs, position, colorAndDirection) {
+  let num;
+  switch (colorAndDirection) {
+    case "red45":
+      num = -7;
+      break;
+    case "red315":
+      num = -9;
+      break;
+    case "black135":
+      num = 9;
+
+      break;
+    case "black225":
+      num = 7;
+
+      break;
+    default:
+      break;
+  }
+  availableSqrs.classList.remove("active");
+  // let newActiveSqr =  final2DArrayofBlackSquares[idx - 1][arr.indexOf(checkerPosValue) - 1];
+  console.log(
+    extractNumFromIdName(selectedPiece.parentElement),
+    " <-- parent id of selected piece"
+  );
+  sqrOfSelectedPiece = document.getElementById(
+    `square-${extractNumFromIdName(selectedPiece.parentElement)}`
+  );
+  console.log(sqrOfSelectedPiece, " <-- currenmt piece");
+  console.log(num);
+  availableSqrs = document.getElementById(`square-${Number(position) + num}`);
+  checkerToBeRemoved = document.getElementById(`square-${position}`);
+  // returns early if there is another checker in the jump target square
+  if (availableSqrs.firstElementChild) return;
+  availableSqrs?.classList?.add("active-jump");
   console.log(availableSqrs, " <-- available Sqr");
   console.log(position, " <-- position");
   console.log(availableSqrPosition1, " <-- avail Pos 1");
   console.log(availableSqrPosition2, " <-- avail Pos 2");
   console.log(checkerToBeRemoved, " <-- checker to be removed");
 }
-// remove the child from checker placed square, replace child in the active square
+
+/*
+* CURRENT ISSUES | 5/17/24 12:37PM
+1. When I select a new checker, the old active class remains on the first option
+2. The old active-jump class remains on the selected square after a jump or choosing another route
+3. logic for choosing the jump desitnation is inconsistent
+
+*/
