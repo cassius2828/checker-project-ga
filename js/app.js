@@ -437,7 +437,7 @@ function selectAvailableSquares(position) {
       !document.getElementById(`square-${Number(position) + 7}`)
         ?.firstElementChild &&
       document
-        .getElementById(`square-${Number(position) + 14}`)
+        .getElementById(`square-${Number(position) + 7}`)
         ?.classList.contains("black") &&
       !document
         .getElementById(`square-${position}`)
